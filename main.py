@@ -1,3 +1,3 @@
-from board import Board
+from ursinaBoard import main
 
-Board()
+main()

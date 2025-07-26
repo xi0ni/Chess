@@ -1,5 +1,4 @@
 from ursina import *
-import emoji
 from pieces import Piece
 
 
@@ -14,31 +13,11 @@ def main():
             y_list = []
             for x in range(8):
                 y_list.append([])
-
             board.append(y_list)
 
         # sets the second and second to last rows to pawns
-        # the first part in the list signifies the piece and the second part signifies the color of the piece so you cant take your own pieces
-        board[1] = [
-            ["p", "b"],
-            ["p", "b"],
-            ["p", "b"],
-            ["p", "b"],
-            ["p", "b"],
-            ["p", "b"],
-            ["p", "b"],
-            ["p", "b"],
-        ]
-        board[-2] = [
-            ["p", "w"],
-            ["p", "w"],
-            ["p", "w"],
-            ["p", "w"],
-            ["p", "w"],
-            ["p", "w"],
-            ["p", "w"],
-            ["p", "w"],
-        ]
+        board[1] = [["p", "b"] for _ in range(8)]
+        board[-2] = [["p", "w"] for _ in range(8)]
 
         board[0] = [
             ["r", "b"],
@@ -71,20 +50,6 @@ def main():
     camera.position = (3, 3.5)
     Text.default_resolution *= 2
 
-    # movable cursor to click pieces
-    player = Piece("black", "bishop")
-    # player.texture("black", "bishop")
-
-    cursor = Tooltip(
-        player.name,
-        color=color.black if player.color == "black" else color.white,
-        origin=(0, 0),
-        scale=4,
-        enabled=True,
-    )
-
-    cursor.background.color = color.clear
-
     # background
     bg = Entity(
         parent=scene,
@@ -96,17 +61,29 @@ def main():
     )
 
     # board layout in 8x8
-
     b_board = [[None for x in range(8)] for y in range(8)]
     for y in range(8):
         for x in range(8):
-            if x % 2 == 1 - y % 2:
-                b = Button(parent=scene, position=(x, y), color=rgb(255, 255, 255))
-            else:
-                b = Button(parent=scene, position=(x, y), color=rgb(0, 0, 0))
-
+            color_tile = rgb(255, 255, 255) if x % 2 == 1 - y % 2 else rgb(0, 0, 0)
+            b = Button(parent=scene, position=(x, y), color=color_tile)
             b_board[x][y] = b
 
+    # setting up all the pieces
+    # board[1] = [[b.color == ] for _ in range(8)]
+    # board[-2] = [[] for _ in range(8)]
+
+    player = Piece("white", "pawn")
+    cursor = Entity(
+        model="quad",
+        texture=player.texture,
+        scale=20
+    )
+
+    def update():
+        # make the piece follow the mouse if desired
+        cursor.position = mouse.position
+
+    
     app.run()
 
 
