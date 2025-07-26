@@ -42,14 +42,19 @@ def CreateBoard():
 app = Ursina()
 
 # variables to hold player and cursor
-player = Piece("white", "pawn")
+player = Piece("white", "rook")
 cursor = Entity(model="quad", texture=player.texture, scale=1)
 
 
 def update():
     mousex = (mouse.position.x) / 0.1
     mousey = (mouse.position.y) / 0.1
-    cursor.position = (mousex + 3, mousey + 3.5, mousey)
+    if mouse.position.y >= 0.004:
+        mousez = (mousey) * -1 + 0.01
+    elif mouse.position.y < 0.004:
+        mousez = (mousey) * 1 + 0.01
+
+    cursor.position = (mousex + 3, mousey + 3.5, mousez)
     print(mouse.position)
     print(cursor.position)
 
