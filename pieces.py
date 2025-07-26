@@ -2,7 +2,7 @@ from ursina import *
 
 
 class Piece:
-    def __init__(self, name, color):
+    def __init__(self, color, name):
         self.name = name
         self.color = color
         self.texture = f'pieces/{color}-{name}.png'

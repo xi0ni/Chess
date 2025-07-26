@@ -1,5 +1,6 @@
 from ursina import *
 import emoji
+from pieces import Piece
 
 
 def main():
@@ -71,11 +72,17 @@ def main():
     Text.default_resolution *= 2
 
     # movable cursor to click pieces
-    player = Entity('pieces/white-pawn.png', color=color.azure)
+    player = Piece("black", "bishop")
+    # player.texture("black", "bishop")
 
     cursor = Tooltip(
-        player.name, color=player.color, origin=(0, 0), scale=4, enabled=True
+        player.name,
+        color=color.black if player.color == "black" else color.white,
+        origin=(0, 0),
+        scale=4,
+        enabled=True,
     )
+
     cursor.background.color = color.clear
 
     # background
