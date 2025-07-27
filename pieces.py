@@ -17,8 +17,5 @@ class Piece(Entity):
     def place_check(self):
         print(self.position)
 
-    def setup(self, color, side):
-        for x in range(8):
-            if color == 'white':
-                
+
             
