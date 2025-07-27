@@ -40,28 +40,55 @@ def CreateBoard():
     }
 
     # Place white pieces (bottom)
-    white["rook"].position = (0, 0, -1)
-    white["knight"].position = (1, 0, -1)
-    white["bishop"].position = (2, 0, -1)
-    white["queen"].position = (3, 0, -1)
-    white["king"].position = (4, 0, -1)
-    white["bishop1"].position = (5, 0, -1)
-    white["knight1"].position = (6, 0, -1)
-    white["rook1"].position = (7, 0, -1)
+    white["rook"].place(0,0,-1)
+    white["knight"].place(1, 0, -1)
+    white["bishop"].place(2, 0, -1)
+    white["queen"].place(3, 0, -1)
+    white["king"].place(4, 0, -1)
+    white["bishop1"].place(5, 0, -1)
+    white["knight1"].place(6, 0, -1)
+    white["rook1"].place(7, 0, -1)
 
     for x in range(8):
-        white["pawns"][x].position = (x, 1, -1)
+        white["pawns"][x].place(x, 1, -1)
 
     # Place black pieces (top)
-    black["rook"].position = (0, 7, -1)
-    black["knight"].position = (1, 7, -1)
-    black["bishop"].position = (2, 7, -1)
-    black["queen"].position = (3, 7, -1)
-    black["king"].position = (4, 7, -1)
-    black["bishop1"].position = (5, 7, -1)
-    black["knight1"].position = (6, 7, -1)
-    black["rook1"].position = (7, 7, -1)
+    black["rook"].place(0, 7, -1)
+    black["knight"].place(1, 7, -1)
+    black["bishop"].place(2, 7, -1)
+    black["queen"].place(3, 7, -1)
+    black["king"].place(4, 7, -1)
+    black["bishop1"].place(5, 7, -1)
+    black["knight1"].place(6, 7, -1)
+    black["rook1"].place(7, 7, -1)
 
     for x in range(8):
-        black["pawns"][x].position = (x, 6, -1)
+        black["pawns"][x].place(x, 6, -1)
 
+
+# variables to hold player and cursor
+player = Piece("white", "rook")
+cursor = Entity(model="quad", texture=player.texture, scale=1)
+clicked = False
+
+
+
+def update():
+    global clicked, player
+
+    if mouse.hovered_entity:
+        hovered = mouse.hovered_entity
+        if isinstance(hovered, Piece):
+            cursor.texture = hovered.texture
+
+    if mouse.left and not clicked:
+        clicked = True
+        if mouse.hovered_entity:
+            hovered = mouse.hovered_entity
+            if isinstance(hovered, Piece):
+                player = hovered
+                player.on_place()  
+    elif not mouse.left:
+        clicked = False
+
+    cursor.position = mouse.position * 10 + Vec3(3, 3.5, -0.5)

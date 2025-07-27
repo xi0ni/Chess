@@ -3,7 +3,6 @@ from ursinaBoard import *
 
 def main():
     app = Ursina()  
-
     CreateBoard()
 
     # Now it's safe to modify the camera
@@ -11,6 +10,7 @@ def main():
     camera.fov = 10
     camera.position = (3, 3.5)
     Text.default_resolution *= 2
+
 
     # Background
     bg = Entity(
