@@ -4,7 +4,7 @@ from ursina import *
 class Piece(Entity):
     def __init__(self, team, name, **kwargs):
         super().__init__(model="quad", texture=f"pieces/{team}-{name}.png", **kwargs)
-        self.team = team  # was `color`, now renamed
+        self.team = team 
         self.name = name
 
     def on_place(self):
@@ -17,5 +17,9 @@ class Piece(Entity):
     def place_check(self):
         print(self.position)
 
+    def move_piece(self):
+        pass
+
+    
 
             

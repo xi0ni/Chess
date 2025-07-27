@@ -39,30 +39,29 @@ def CreateBoard():
         "pawns": [Piece("white", "pawn") for _ in range(8)],
     }
 
-    # Place black pieces
-    black["rook"].position = (0, 0, -1)
-    black["knight"].position = (1, 0, -1)
-    black["bishop"].position = (2, 0, -1)
-    black["queen"].position = (3, 0, -1)
-    black["king"].position = (4, 0, -1)
-    black["bishop1"].position = (5, 0, -1)
-    black["knight1"].position = (6, 0, -1)
-    black["rook1"].position = (7, 0, -1)
+    # Place white pieces (bottom)
+    white["rook"].position = (0, 0, -1)
+    white["knight"].position = (1, 0, -1)
+    white["bishop"].position = (2, 0, -1)
+    white["queen"].position = (3, 0, -1)
+    white["king"].position = (4, 0, -1)
+    white["bishop1"].position = (5, 0, -1)
+    white["knight1"].position = (6, 0, -1)
+    white["rook1"].position = (7, 0, -1)
 
     for x in range(8):
-        black["pawns"][x].position = (x, 1, -1)
+        white["pawns"][x].position = (x, 1, -1)
 
-    # Place white pieces
-    white["rook"].position = (0, 7, -1)
-    white["knight"].position = (1, 7, -1)
-    white["bishop"].position = (2, 7, -1)
-    white["queen"].position = (3, 7, -1)
-    white["king"].position = (4, 7, -1)
-    white["bishop1"].position = (5, 7, -1)
-    white["knight1"].position = (6, 7, -1)
-    white["rook1"].position = (7, 7, -1)
+    # Place black pieces (top)
+    black["rook"].position = (0, 7, -1)
+    black["knight"].position = (1, 7, -1)
+    black["bishop"].position = (2, 7, -1)
+    black["queen"].position = (3, 7, -1)
+    black["king"].position = (4, 7, -1)
+    black["bishop1"].position = (5, 7, -1)
+    black["knight1"].position = (6, 7, -1)
+    black["rook1"].position = (7, 7, -1)
 
     for x in range(8):
-        white["pawns"][x].position = (x, 6, -1)
-
+        black["pawns"][x].position = (x, 6, -1)
 
