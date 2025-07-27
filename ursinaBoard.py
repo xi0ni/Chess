@@ -14,28 +14,28 @@ def CreateBoard():
         board.append(y_list)
 
     # sets the second and second to last rows to pawns
-    board[1] = [["p", "b"] for _ in range(8)]
-    board[-2] = [["p", "w"] for _ in range(8)]
+    board[1] = [Piece("black", "pawn") for _ in range(8)]
+    board[-2] = [Piece("white", "pawn") for _ in range(8)]
 
     board[0] = [
-        ["r", "b"],
-        ["h", "b"],
-        ["b", "b"],
-        ["q", "b"],
-        ["k", "b"],
-        ["b", "b"],
-        ["h", "b"],
-        ["c", "b"],
+        Piece("black", "rook"),
+        Piece("black", "knight"),
+        Piece("black", "bishop"),
+        Piece("black", "queen"),
+        Piece("black", "king"),
+        Piece("black", "bishop"),
+        Piece("black", "knight"),
+        Piece("black", "rook"),
     ]
     board[-1] = [
-        ["r", "w"],
-        ["h", "w"],
-        ["b", "w"],
-        ["q", "w"],
-        ["k", "w"],
-        ["b", "w"],
-        ["h", "w"],
-        ["c", "w"],
+        Piece("white", "rook"),
+        Piece("white", "knight"),
+        Piece("white", "bishop"),
+        Piece("white", "queen"),
+        Piece("white", "king"),
+        Piece("white", "bishop"),
+        Piece("white", "knight"),
+        Piece("white", "rook"),
     ]
 
 
@@ -45,18 +45,22 @@ app = Ursina()
 player = Piece("white", "rook")
 cursor = Entity(model="quad", texture=player.texture, scale=1)
 
+rook = Piece("black", "rook")
+rook.place(-3, 1, 1)
+
+
 
 def update():
     mousex = (mouse.position.x) / 0.1
     mousey = (mouse.position.y) / 0.1
     if mouse.position.y >= 0.004:
-        mousez = (mousey) * -1 + 0.01
+        mousez = (mousey) * -1
     elif mouse.position.y < 0.004:
-        mousez = (mousey) * 1 + 0.01
+        mousez = (mousey) * 1
 
     cursor.position = (mousex + 3, mousey + 3.5, mousez)
-    print(mouse.position)
-    print(cursor.position)
+    # print(f"mouse {mouse.position}")
+    # print(f"object {cursor.position}")
 
 
 def main():

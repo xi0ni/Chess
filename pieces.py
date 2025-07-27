@@ -1,9 +1,18 @@
-class Piece:
-    def __init__(self, color, name):
+from ursina import *
+
+
+class Piece(Entity):
+    def __init__(self, team, name, **kwargs):
+        super().__init__(model="quad", texture=f"pieces/{team}-{name}.png", **kwargs)
+        self.team = team  # was `color`, now renamed
         self.name = name
-        self.color = color
-        self.texture = f'pieces/{color}-{name}.png'
 
     def on_place(self):
-        self.color = 'black' if self.color == 'white' else 'white'
-        self.texture = f'pieces/{self.color}-{self.name}.png'
+        self.team = "black" if self.team == "white" else "white"
+        self.texture = f"pieces/{self.team}-{self.name}.png"
+
+    def place(self, x, y, z):
+        self.position = (x, y, z)
+
+    def place_check(self):
+        print(self.position)
