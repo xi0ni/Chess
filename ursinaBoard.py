@@ -13,30 +13,57 @@ def CreateBoard():
             y_list.append([])
         board.append(y_list)
 
-    # sets the second and second to last rows to pawns
-    board[1] = [Piece("black", "pawn") for _ in range(8)]
-    board[-2] = [Piece("white", "pawn") for _ in range(8)]
+#black pieces dictionary
+    black = {
+        "rook": Piece("black", "rook"),
+        "knight": Piece("black", "knight"),
+        "bishop": Piece("black", "bishop"),
+        "queen": Piece("black", "queen"),
+        "king": Piece("black", "king"),
+        "bishop1": Piece("black", "bishop"),
+        "knight1": Piece("black", "knight"),
+        "rook1": Piece("black", "rook"),
+        "pawn": Piece("black", "pawn"),
+    }
 
-    board[0] = [
-        Piece("black", "rook"),
-        Piece("black", "knight"),
-        Piece("black", "bishop"),
-        Piece("black", "queen"),
-        Piece("black", "king"),
-        Piece("black", "bishop"),
-        Piece("black", "knight"),
-        Piece("black", "rook"),
-    ]
-    board[-1] = [
-        Piece("white", "rook"),
-        Piece("white", "knight"),
-        Piece("white", "bishop"),
-        Piece("white", "queen"),
-        Piece("white", "king"),
-        Piece("white", "bishop"),
-        Piece("white", "knight"),
-        Piece("white", "rook"),
-    ]
+#white pieces dictionary
+    white = {
+        "rook": Piece("white", "rook"),
+        "knight": Piece("white", "knight"),
+        "bishop": Piece("white", "bishop"),
+        "queen": Piece("white", "queen"),
+        "king": Piece("white", "king"),
+        "bishop1": Piece("white", "bishop"),
+        "knight1": Piece("white", "knight"),
+        "rook1": Piece("white", "rook"),
+        "pawn": Piece("white", "pawn"),
+    }
+
+    # Place black pieces
+    black["rook"].position = (0, 0, -1)
+    black["knight"].position = (1, 0, -1)
+    black["bishop"].position = (2, 0, -1)
+    black["queen"].position = (3, 0, -1)
+    black["king"].position = (4, 0, -1)
+    black["bishop1"].position = (5, 0, -1)
+    black["knight1"].position = (6, 0, -1)
+    black["rook1"].position = (7, 0, -1)
+
+    for x in range(8):
+        black["pawn"].position = (x, 1, -1)
+
+    # Place white pieces
+    white["rook"].position = (0, 7, -1)
+    white["knight"].position = (1, 7, -1)
+    white["bishop"].position = (2, 7, -1)
+    white["queen"].position = (3, 7, -1)
+    white["king"].position = (4, 7, -1)
+    white["bishop1"].position = (5, 7, -1)
+    white["knight1"].position = (6, 7, -1)
+    white["rook1"].position = (7, 7, -1)
+
+    for x in range(8):
+        white["pawn"].position = (x, 6, -1)
 
 
 app = Ursina()
@@ -44,10 +71,6 @@ app = Ursina()
 # variables to hold player and cursor
 player = Piece("white", "rook")
 cursor = Entity(model="quad", texture=player.texture, scale=1)
-
-rook = Piece("black", "rook")
-rook.place(-3, 1, 1)
-
 
 
 def update():
@@ -86,7 +109,7 @@ def main():
     b_board = [[None for x in range(8)] for y in range(8)]
     for y in range(8):
         for x in range(8):
-            color_tile = rgb(255, 255, 255) if x % 2 == 1 - y % 2 else rgb(0, 0, 0)
+            color_tile = rgb(1, 1, 1) if x % 2 == 1 - y % 2 else rgb(0.28, 0.28, 0.27)
             b = Button(parent=scene, position=(x, y), color=color_tile)
             b_board[x][y] = b
 
