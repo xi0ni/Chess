@@ -10,6 +10,7 @@ def main():
     camera.fov = 10
     camera.position = (3, 3.5)
     Text.default_resolution *= 2
+    mouse.visible = False
 
 
     # Background

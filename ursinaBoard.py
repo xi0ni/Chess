@@ -77,7 +77,7 @@ def CreateBoard():
 
 
 # variables to hold player and cursor
-player = Piece("white", "rook")
+player = Piece("mouse", "button")
 cursor = Entity(model="quad", texture=player.texture, scale=1)
 clicked = False
 
@@ -109,7 +109,7 @@ def update():
     cursor.position = mouse.position * 10 + Vec3(3, 3.5, -0.5)
 
 
-
+#this isnt working
 def clear_square(x, y):
     global board
     piece = board[y][x]
