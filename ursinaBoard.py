@@ -93,9 +93,12 @@ def update():
         board_y = int((mouse.position.y + 1) * 4)
 
         # makes sure coords are within board bounds
+        print(f"mouse {mouse.position}")
+        print(f"rounded {board_x} , {board_y}")
+        print(f"cursor {cursor.position}")
         if 0 <= board_x < 8 and 0 <= board_y < 8:
             if mouse.hovered_entity:
-                clear_square(board_x, board_y)
+                clear_square(board_y, board_x)
                 player = mouse.hovered_entity
                 if player.texture != '':
                     cursor.texture = player.texture
@@ -116,3 +119,4 @@ def clear_square(x, y):
     if piece:
         piece.disable()
         board[y][x] = None
+
