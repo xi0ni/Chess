@@ -78,9 +78,9 @@ def update():
         
 
         if mouse.hovered_entity:
+            print(mouse.hovered_entity)
             player = mouse.hovered_entity
             cursor.texture = player.texture
-            print(player)
     elif not mouse.left:
         clicked = False
 
