@@ -47,12 +47,12 @@ def CreateBoard():
         white["rook1"],
     ]
     for x, piece in enumerate(back_row_white):
-        piece.place(x, 0, -1)
+        piece.place(x, 0)
         board[0][x] = piece
 
     for x in range(8):
         pawn = white["pawns"][x]
-        pawn.place(x, 1, -1)
+        pawn.place(x, 1)
         board[1][x] = pawn
 
     # Place black pieces (top)
@@ -67,17 +67,17 @@ def CreateBoard():
         black["rook1"],
     ]
     for x, piece in enumerate(back_row_black):
-        piece.place(x, 7, -1)
+        piece.place(x, 7)
         board[7][x] = piece
 
     for x in range(8):
         pawn = black["pawns"][x]
-        pawn.place(x, 6, -1)
+        pawn.place(x, 6)
         board[6][x] = pawn
 
 
 # variables to hold player and cursor
-player = Piece("white", "rook")
+player = Piece("mouse", "button")
 cursor = Entity(model="quad", texture=player.texture, scale=1)
 clicked = False
 

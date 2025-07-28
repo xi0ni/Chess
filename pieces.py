@@ -12,8 +12,8 @@ class Piece(Entity):
         self.team = "black" if self.team == "white" else "white"
         self.texture = f"pieces/{self.team}-{self.name}.png"
 
-    def place(self, x, y, z):
-        self.position = (x, y, z)
+    def place(self, x, y):
+        self.position = (x, y, -1)
 
     def place_check(self):
         print(self.position)
