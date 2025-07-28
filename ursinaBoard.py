@@ -37,8 +37,14 @@ def CreateBoard():
 
     # Place white pieces (bottom)
     back_row_white = [
-        white["rook"], white["knight"], white["bishop"], white["queen"],
-        white["king"], white["bishop1"], white["knight1"], white["rook1"]
+        white["rook"],
+        white["knight"],
+        white["bishop"],
+        white["queen"],
+        white["king"],
+        white["bishop1"],
+        white["knight1"],
+        white["rook1"],
     ]
     for x, piece in enumerate(back_row_white):
         piece.place(x, 0, -1)
@@ -51,8 +57,14 @@ def CreateBoard():
 
     # Place black pieces (top)
     back_row_black = [
-        black["rook"], black["knight"], black["bishop"], black["queen"],
-        black["king"], black["bishop1"], black["knight1"], black["rook1"]
+        black["rook"],
+        black["knight"],
+        black["bishop"],
+        black["queen"],
+        black["king"],
+        black["bishop1"],
+        black["knight1"],
+        black["rook1"],
     ]
     for x, piece in enumerate(back_row_black):
         piece.place(x, 7, -1)
@@ -71,24 +83,43 @@ clicked = False
 
 
 def update():
-
     global clicked, player
-    if mouse.left:
-        clicked = True
-        
 
+<<<<<<< HEAD
         if mouse.hovered_entity:
             print(mouse.hovered_entity)
             player = mouse.hovered_entity
             cursor.texture = player.texture
+=======
+    if mouse.left and not clicked:
+        clicked = True
+
+        # turn mouse position to board coordinates (0-7) cuz its oigionally 0-1
+        board_x = int((mouse.position.x + 1) * 4)
+        board_y = int((mouse.position.y + 1) * 4)
+
+        # makes sure coords are within board bounds
+        if 0 <= board_x < 8 and 0 <= board_y < 8:
+            if mouse.hovered_entity:
+                clear_square(board_x, board_y)
+                player = mouse.hovered_entity
+                if player.texture != '':
+                    cursor.texture = player.texture
+            else:
+                print(f"No hovered entity at ({board_x}, {board_y})")
+
+>>>>>>> 1a9b77b1433f04b55f93e28c417d722171a18d9b
     elif not mouse.left:
         clicked = False
 
+    # Update cursor position
     cursor.position = mouse.position * 10 + Vec3(3, 3.5, -0.5)
+
+
 
 def clear_square(x, y):
     global board
-    piece = board[y][x]  
+    piece = board[y][x]
     if piece:
-        piece.disable()  
-        board[y][x] = None  
+        piece.disable()
+        board[y][x] = None
