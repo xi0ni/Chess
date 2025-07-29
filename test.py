@@ -96,6 +96,19 @@ def main():
 
     CreateMovesList()
 
+    def IsPathClear(x0, y0, dx, dy):
+        steps = max(abs(dx), abs(dy))
+        if steps == 0:
+            return True
+        step_x = dx // steps if dx != 0 else 0
+        step_y = dy // steps if dy != 0 else 0
+        for step in range(1, steps):
+            nx = x0 + step_x * step
+            ny = y0 + step_y * step
+            if board[ny][nx] != []:
+                return False
+        return True
+
     def UpdateBoard():
         global selected_piece
         PieceTurt.clear()
@@ -137,12 +150,13 @@ def main():
                     x, y = x0 + dx, y0 + dy
                     if 0 <= x < 8 and 0 <= y < 8:
                         if board[y][x] == [] or board[y][x][1] != piece_color:
-                            PieceTurt.goto(x + 0.1, y + 0.1)
-                            PieceTurt.pendown()
-                            for _ in range(4):
-                                PieceTurt.forward(0.8)
-                                PieceTurt.right(-90)
-                            PieceTurt.penup()
+                            if piece_type == "knight" or IsPathClear(x0, y0, dx, dy):
+                                PieceTurt.goto(x + 0.1, y + 0.1)
+                                PieceTurt.pendown()
+                                for _ in range(4):
+                                    PieceTurt.forward(0.8)
+                                    PieceTurt.right(-90)
+                                PieceTurt.penup()
 
             PieceTurt.pencolor("black")
 
@@ -178,10 +192,11 @@ def main():
                     target_x, target_y = x0 + dx, y0 + dy
                     if target_x == x and target_y == y:
                         if board[y][x] == [] or board[y][x][1] != piece_color:
-                            board[y][x] = board[y0][x0]
-                            board[y0][x0] = []
-                            selected_piece = None
-                            return
+                            if piece_type == "knight" or IsPathClear(x0, y0, dx, dy):
+                                board[y][x] = board[y0][x0]
+                                board[y0][x0] = []
+                                selected_piece = None
+                                return
 
             selected_piece = None
 
