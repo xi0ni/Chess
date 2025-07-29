@@ -1,13 +1,17 @@
 import turtle
 import math
+import os
 
 window = None
 WINX, WINY = 800, 800
 turtle.tracer(False)  # Disable animation for faster drawing
 
+piece_images = {}
+piece_turtles = []
+
 
 def main():
-    global selected_piece
+    global selected_piece, board, piece_images, piece_turtles
     selected_piece = None
 
     def setupWin():
@@ -18,16 +22,27 @@ def main():
 
     setupWin()
 
+    # Register PNG images
+    piece_names = ["pawn", "knight", "bishop", "rook", "queen", "king"]
+    colors = ["white", "black"]
+    for color in colors:
+        for name in piece_names:
+            filename = f"pieces/{color}-{name}.gif"
+            if os.path.exists(filename):
+                turtle.register_shape(filename)
+                piece_images[(name, color)] = filename
+            else:
+                print(f"Missing image: {filename}")
+
     BoardTurt = turtle.Turtle()
     PieceTurt = turtle.Turtle()
 
-    turtle.setworldcoordinates(0, 0, 8, 8)
+    # Flip Y-axis: white is at the bottom
+    turtle.setworldcoordinates(0, 8, 8, 0)
 
-    global board
     board = []
 
     def CreateBoard():
-        global board
         BoardTurt.ht()
         PieceTurt.ht()
         PieceTurt.penup()
@@ -44,12 +59,24 @@ def main():
         board[-2] = [["pawn", "white"]] * 8
 
         board[0] = [
-            ["rook", "black"], ["knight", "black"], ["bishop", "black"], ["queen", "black"],
-            ["king", "black"], ["bishop", "black"], ["knight", "black"], ["rook", "black"]
+            ["rook", "black"],
+            ["knight", "black"],
+            ["bishop", "black"],
+            ["queen", "black"],
+            ["king", "black"],
+            ["bishop", "black"],
+            ["knight", "black"],
+            ["rook", "black"],
         ]
         board[-1] = [
-            ["rook", "white"], ["knight", "white"], ["bishop", "white"], ["queen", "white"],
-            ["king", "white"], ["bishop", "white"], ["knight", "white"], ["rook", "white"]
+            ["rook", "white"],
+            ["knight", "white"],
+            ["bishop", "white"],
+            ["queen", "white"],
+            ["king", "white"],
+            ["bishop", "white"],
+            ["knight", "white"],
+            ["rook", "white"],
         ]
 
     CreateBoard()
@@ -62,7 +89,7 @@ def main():
                 BoardTurt.pendown()
                 BoardTurt.fillcolor("white" if (x + y) % 2 == 0 else "brown")
                 BoardTurt.begin_fill()
-                for i in range(4):
+                for _ in range(4):
                     BoardTurt.forward(1)
                     BoardTurt.right(-90)
                 BoardTurt.end_fill()
@@ -74,14 +101,26 @@ def main():
         global valid_moves
         valid_moves = {}
 
-        valid_moves["pawn"] = [[0, 1]] 
+        valid_moves["pawn"] = [[0, 1]]
         valid_moves["knight"] = [
-            [1, 2], [2, 1], [-1, 2], [-2, 1],
-            [1, -2], [2, -1], [-1, -2], [-2, -1]
+            [1, 2],
+            [2, 1],
+            [-1, 2],
+            [-2, 1],
+            [1, -2],
+            [2, -1],
+            [-1, -2],
+            [-2, -1],
         ]
         valid_moves["king"] = [
-            [0, 1], [1, 0], [0, -1], [-1, 0],
-            [1, 1], [1, -1], [-1, 1], [-1, -1]
+            [0, 1],
+            [1, 0],
+            [0, -1],
+            [-1, 0],
+            [1, 1],
+            [1, -1],
+            [-1, 1],
+            [-1, -1],
         ]
 
         valid_moves["rook"] = []
@@ -110,17 +149,31 @@ def main():
         return True
 
     def UpdateBoard():
-        global selected_piece
+        global selected_piece, piece_turtles
         PieceTurt.clear()
 
-        for y in range(len(board)):
-            for x in range(len(board[y])):
-                if board[y][x] != []:
-                    PieceTurt.penup()
-                    PieceTurt.goto(x + 0.5, y + 0.5)
-                    PieceTurt.write(board[y][x][1], align="center", font=("Arial", 20, "normal"))
-                    PieceTurt.goto(x + 0.5, y + 0.2)
-                    PieceTurt.write(board[y][x][0], align="center", font=("Arial", 20, "normal"))
+        # Remove previous turtles
+        for t in piece_turtles:
+            t.hideturtle()
+            t.clear()
+        piece_turtles.clear()
+
+        for y in range(8):
+            for x in range(8):
+                piece = board[y][x]
+                if piece:
+                    piece_type, piece_color = piece
+                    img = piece_images.get((piece_type, piece_color))
+                    if img:
+                        t = turtle.Turtle()
+                        t.penup()
+                        t.shape(img)
+                        t.goto(x + 0.5, y + 0.5)
+                        t.setheading(0)
+                        t.speed(0)
+                        t.turtlesize(1)
+                        t.showturtle()
+                        piece_turtles.append(t)
 
         if selected_piece is not None:
             PieceTurt.pencolor("green")
@@ -132,7 +185,6 @@ def main():
                 PieceTurt.right(-90)
             PieceTurt.penup()
 
-            # Highlight valid moves in red
             PieceTurt.pencolor("red")
             x0, y0 = selected_piece
             piece = board[y0][x0]
@@ -146,7 +198,10 @@ def main():
                     moves.append([0, 2])
 
                 for move in moves:
-                    dx, dy = move[0], move[1] * direction if piece_type == "pawn" else move[1]
+                    dx, dy = (
+                        move[0],
+                        move[1] * direction if piece_type == "pawn" else move[1],
+                    )
                     x, y = x0 + dx, y0 + dy
                     if 0 <= x < 8 and 0 <= y < 8:
                         if board[y][x] == [] or board[y][x][1] != piece_color:
@@ -162,7 +217,7 @@ def main():
 
         PieceTurt.goto(0, 0)
         turtle.update()
-        turtle.ontimer(UpdateBoard, 10)
+        turtle.ontimer(UpdateBoard, 100)
 
     def ScreenClicked(x, y):
         global selected_piece, board
@@ -188,7 +243,10 @@ def main():
                     moves.append([0, 2])
 
                 for move in moves:
-                    dx, dy = move[0], move[1] * direction if piece_type == "pawn" else move[1]
+                    dx, dy = (
+                        move[0],
+                        move[1] * direction if piece_type == "pawn" else move[1],
+                    )
                     target_x, target_y = x0 + dx, y0 + dy
                     if target_x == x and target_y == y:
                         if board[y][x] == [] or board[y][x][1] != piece_color:
