@@ -112,7 +112,7 @@ def update():
     cursor.position = mouse.position * 10 + Vec3(3, 3.5, -0.5)
 
 
-
+#this isnt working
 def clear_square(x, y):
     global board
     piece = board[y][x]
