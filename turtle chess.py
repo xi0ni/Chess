@@ -1,6 +1,5 @@
 import turtle
 import math
-import os
 
 window = None
 WINX, WINY = 960, 960
@@ -8,6 +7,7 @@ turtle.tracer(False)  # Disable animation for faster drawing
 
 piece_images = {}
 piece_turtles = []
+cur_turn = 'white'
 
 
 def main():
@@ -28,11 +28,8 @@ def main():
     for color in colors:
         for name in piece_names:
             filename = f"pieces/{color}-{name}.gif"
-            if os.path.exists(filename):
-                turtle.register_shape(filename)
-                piece_images[(name, color)] = filename
-            else:
-                print(f"Missing image: {filename}")
+            turtle.register_shape(filename)
+            piece_images[(name, color)] = filename
 
     BoardTurt = turtle.Turtle()
     PieceTurt = turtle.Turtle()
@@ -101,26 +98,14 @@ def main():
         global valid_moves
         valid_moves = {}
 
-        valid_moves["pawn"] = [[0, 1]]
+        # Basic moves, used except for pawn special moves
         valid_moves["knight"] = [
-            [1, 2],
-            [2, 1],
-            [-1, 2],
-            [-2, 1],
-            [1, -2],
-            [2, -1],
-            [-1, -2],
-            [-2, -1],
+            [1, 2], [2, 1], [-1, 2], [-2, 1],
+            [1, -2], [2, -1], [-1, -2], [-2, -1],
         ]
         valid_moves["king"] = [
-            [0, 1],
-            [1, 0],
-            [0, -1],
-            [-1, 0],
-            [1, 1],
-            [1, -1],
-            [-1, 1],
-            [-1, -1],
+            [0, 1], [1, 0], [0, -1], [-1, 0],
+            [1, 1], [1, -1], [-1, 1], [-1, -1],
         ]
 
         valid_moves["rook"] = []
@@ -190,28 +175,51 @@ def main():
             piece = board[y0][x0]
             if piece:
                 piece_type, piece_color = piece
-                moves = valid_moves[piece_type].copy()
-                direction = -1 if piece_color == "white" else 1
-                start_row = 6 if piece_color == "white" else 1
 
-                if piece_type == "pawn" and y0 == start_row:
-                    moves.append([0, 2])
+                if piece_type == "pawn":
+                    direction = -1 if piece_color == "white" else 1
+                    moves = []
+
+                    # Forward 1
+                    if 0 <= y0 + direction < 8 and board[y0 + direction][x0] == []:
+                        moves.append([0, 1])
+
+                        # Forward 2 from start row if clear
+                        start_row = 6 if piece_color == "white" else 1
+                        if y0 == start_row and board[y0 + 2 * direction][x0] == []:
+                            moves.append([0, 2])
+
+                    # Diagonal captures
+                    for dx in [-1, 1]:
+                        nx, ny = x0 + dx, y0 + direction
+                        if 0 <= nx < 8 and 0 <= ny < 8:
+                            target = board[ny][nx]
+                            if target != [] and target[1] != piece_color:
+                                moves.append([dx, 1])
+                else:
+                    moves = valid_moves[piece_type].copy()
 
                 for move in moves:
-                    dx, dy = (
-                        move[0],
-                        move[1] * direction if piece_type == "pawn" else move[1],
-                    )
+                    dx, dy = move if piece_type != "pawn" else (move[0], move[1] * direction)
                     x, y = x0 + dx, y0 + dy
                     if 0 <= x < 8 and 0 <= y < 8:
-                        if board[y][x] == [] or board[y][x][1] != piece_color:
-                            if piece_type == "knight" or IsPathClear(x0, y0, dx, dy):
-                                PieceTurt.goto(x + 0.1, y + 0.1)
-                                PieceTurt.pendown()
-                                for _ in range(4):
-                                    PieceTurt.forward(0.8)
-                                    PieceTurt.right(-90)
-                                PieceTurt.penup()
+                        if piece_type == "pawn":
+                            # Pawn moves already validated above
+                            pass
+                        else:
+                            # For other pieces, check capture or empty square
+                            if board[y][x] != [] and board[y][x][1] == piece_color:
+                                continue
+                            if piece_type != "knight" and not IsPathClear(x0, y0, dx, dy):
+                                continue
+
+                        # Draw red square for valid move
+                        PieceTurt.goto(x + 0.1, y + 0.1)
+                        PieceTurt.pendown()
+                        for _ in range(4):
+                            PieceTurt.forward(0.8)
+                            PieceTurt.right(-90)
+                        PieceTurt.penup()
 
             PieceTurt.pencolor("black")
 
@@ -235,28 +243,63 @@ def main():
             piece = board[y0][x0]
             if piece:
                 piece_type, piece_color = piece
-                moves = valid_moves[piece_type].copy()
-                direction = -1 if piece_color == "white" else 1
-                start_row = 6 if piece_color == "white" else 1
 
-                if piece_type == "pawn" and y0 == start_row:
-                    moves.append([0, 2])
+                if piece_type == "pawn":
+                    direction = -1 if piece_color == "white" else 1
+                    moves = []
+
+                    # Forward 1
+                    if 0 <= y0 + direction < 8 and board[y0 + direction][x0] == []:
+                        moves.append([0, 1])
+
+                        # Forward 2 from start row if clear
+                        start_row = 6 if piece_color == "white" else 1
+                        if y0 == start_row and board[y0 + 2 * direction][x0] == []:
+                            moves.append([0, 2])
+
+                    # Diagonal captures
+                    for dx in [-1, 1]:
+                        nx, ny = x0 + dx, y0 + direction
+                        if 0 <= nx < 8 and 0 <= ny < 8:
+                            target = board[ny][nx]
+                            if target != [] and target[1] != piece_color:
+                                moves.append([dx, 1])
+                else:
+                    moves = valid_moves[piece_type].copy()
 
                 for move in moves:
-                    dx, dy = (
-                        move[0],
-                        move[1] * direction if piece_type == "pawn" else move[1],
-                    )
+                    dx, dy = move if piece_type != "pawn" else (move[0], move[1] * direction)
                     target_x, target_y = x0 + dx, y0 + dy
+
                     if target_x == x and target_y == y:
-                        if board[y][x] == [] or board[y][x][1] != piece_color:
-                            if piece_type == "knight" or IsPathClear(x0, y0, dx, dy):
-                                board[y][x] = board[y0][x0]
-                                board[y0][x0] = []
-                                selected_piece = None
-                                return
+                        if piece_type == "pawn":
+                            # pawn forward moves must be to empty square,
+                            # diagonal moves must capture enemy piece
+                            if dx == 0:
+                                # forward move
+                                if board[target_y][target_x] == []:
+                                    board[target_y][target_x] = board[y0][x0]
+                                    board[y0][x0] = []
+                                    selected_piece = None
+                                    return
+                            else:
+                                # pawn capture
+                                if board[target_y][target_x] != [] and board[target_y][target_x][1] != piece_color:
+                                    board[target_y][target_x] = board[y0][x0]
+                                    board[y0][x0] = []
+                                    selected_piece = None
+                                    return
+                        else:
+                            # For other pieces, check path clear and capture or move
+                            if board[target_y][target_x] == [] or board[target_y][target_x][1] != piece_color:
+                                if piece_type == "knight" or IsPathClear(x0, y0, dx, dy):
+                                    board[target_y][target_x] = board[y0][x0]
+                                    board[y0][x0] = []
+                                    selected_piece = None
+                                    return
 
             selected_piece = None
+            
 
     turtle.onscreenclick(ScreenClicked)
     UpdateBoard()
