@@ -1,23 +1,40 @@
+# initializes our imports 
 import turtle
 import math
 
+# creates the turtle window
 window = None
-WINX, WINY = 960, 960
+WINX, WINY = 1200, 960
+# sets the tracer to false so the screen only updates when we want it too
 turtle.tracer(False)
 
+# creates the piece images dictionary
 piece_images = {}
+# creates the piece turtles list
 piece_turtles = []
+
+# creates a variable for the current active players turn
 cur_turn = "white"
 
-
+# defines a function to check if the path from a given square to another given square is clear
 def IsPathClear(x0, y0, dx, dy):
+
+    # returns false if one of the given two points is outside of the board
     if x0 + dx < 0 or x0 + dx >= 8 or y0 + dy < 0 or y0 + dy >= 8:
         return False
+    
+    # creates a steps varable that holds the max distance between the two points
     steps = max(abs(dx), abs(dy))
+
+    # if the distance is 0 return true
     if steps == 0:
         return True
+    
+    # creates step variables for x and y which store how many squares we should move each time we check a square
     step_x = dx // steps if dx != 0 else 0
     step_y = dy // steps if dy != 0 else 0
+
+    # goes through every square in that direction t
     for step in range(1, steps):
         nx = x0 + step_x * step
         ny = y0 + step_y * step
@@ -205,7 +222,7 @@ def main():
 
     BoardTurt = turtle.Turtle()
     PieceTurt = turtle.Turtle()
-    turtle.setworldcoordinates(0, 8, 8, 0)
+    turtle.setworldcoordinates(0, 8, 10, 0)
 
     board = []
 
@@ -308,6 +325,25 @@ def main():
             PieceTurt.pencolor("black")
 
         PieceTurt.goto(0, 0)
+
+        for x in range(8):
+            if board[7][x] is not None:
+                if board[7][x].type == 'pawn' and board[7][x].color == 'white':
+                    board[7][x] = Queen('white')
+        
+        for x in range(8):
+            if board[0][x] is not None:
+                if board[0][x].type == 'pawn' and board[0][x].color == 'black':
+                    board[0][x] = Queen('black')
+
+        PieceTurt.penup()
+        PieceTurt.goto(9,1)
+        PieceTurt.write(cur_turn.capitalize()+"'s",align='center',font=('Arial',60,'normal'))
+        PieceTurt.goto(9,1.6)
+        PieceTurt.write("Turn",align='center',font=('Arial',60,'normal'))
+
+
+
         turtle.update()
         turtle.ontimer(UpdateBoard, 100)
 
