@@ -3,7 +3,7 @@ import math
 import os
 
 window = None
-WINX, WINY = 800, 800
+WINX, WINY = 960, 960
 turtle.tracer(False)  # Disable animation for faster drawing
 
 piece_images = {}
