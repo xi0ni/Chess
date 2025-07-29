@@ -1,5 +1,6 @@
 import turtle
 import math
+from time import sleep
 
 window = None
 WINX, WINY = 960, 960
@@ -30,6 +31,7 @@ class Pawn:
         self.color = color
         self.type = "pawn"
         self.start_row = 6 if color == "white" else 1
+        self.has_moved = False
 
     def GetValidMoves(self, x, y, board):
         moves = []
@@ -58,6 +60,7 @@ class Knight:
     def __init__(self, color):
         self.color = color
         self.type = "knight"
+        self.has_moved = False
 
     def GetValidMoves(self, x, y, board):
         moves = [
@@ -78,6 +81,7 @@ class Bishop:
     def __init__(self, color):
         self.color = color
         self.type = "bishop"
+        self.has_moved = False
 
     def GetValidMoves(self, x, y, board):
         moves = []
@@ -118,6 +122,7 @@ class Queen:
     def __init__(self, color):
         self.color = color
         self.type = "queen"
+        self.has_moved = False
 
     def GetValidMoves(self, x, y, board):
         moves = []
@@ -142,6 +147,7 @@ class King:
         self.has_moved = False
 
     def GetValidMoves(self, x, y, board):
+
         moves = [
             [0, 1], [1, 0], [0, -1], [-1, 0],
             [1, 1], [1, -1], [-1, 1], [-1, -1],
@@ -158,17 +164,16 @@ class King:
         # Castling
         if not self.has_moved:
 
-            y = 0 if self.color == "white" else 7
+            y = 7 if self.color == "white" else 0
 
-            if board[y][0] == Rook:
-                if board[y][0].has_moved == False and self.has_moved == False and board[y][0].color == self.color:
-                    if IsPathClear(x, y, 2, 0):
-                        valid_moves.append([2, 0])
-            if board[y][7] == Rook:
-                if board[y][7].has_moved == False and self.has_moved == False and board[y][0].color == self.color:
-                    if IsPathClear(x, y, -2, 0):
-                        valid_moves.append([-2, 0])
-
+            if board[y][0] != None:
+                if board[y][0].type == 'rook' and board[y][0].has_moved == False and self.has_moved == False and board[y][0].color == self.color:
+                        if IsPathClear(x, y, -2, 0):
+                            valid_moves.append([-2, 0,0,y])
+            if board[y][7] != None:
+                if board[y][7].type == 'rook' and board[y][7].has_moved == False and self.has_moved == False and board[y][7].color == self.color:
+                        if IsPathClear(x, y, 2, 0):
+                            valid_moves.append([2, 0,7,y])
         return valid_moves
     
     
@@ -336,6 +341,7 @@ def main():
                     board[y][x] = piece
                     board[y0][x0] = None
                     selected_piece = None
+                    piece.has_moved = True
                     UpdateBoard()
                     global cur_turn
                     cur_turn = 'black' if cur_turn == 'white' else 'white'
@@ -343,7 +349,7 @@ def main():
                     selected_piece = None
 
             selected_piece = None
-            
+        
 
     turtle.onscreenclick(ScreenClicked)
     UpdateBoard()
