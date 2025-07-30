@@ -593,10 +593,9 @@ def main():
                 # if the move is one of the valid moves that the piece can make
                 if move in valid_moves:
 
-                    # we first check if it is a king
+                    # if it is a king
                     if isinstance(piece, King):
-
-                        # if it is we check if it is castling and if it is we move the rook and the king
+                        # if castling, move the rook
                         if move == [2, 0]:
                             board[y][x - 1] = board[y][7]
                             board[y][7] = None
@@ -605,7 +604,7 @@ def main():
                             board[y][0] = None
                         piece.has_moved = True
 
-                    # if the piece is a rook we store that it has moved so we cant castle with it
+                    # if the piece is a rook we store that it has moved so we can't castle with it
                     if isinstance(piece, Rook):
                         piece.has_moved = True
 
@@ -615,11 +614,17 @@ def main():
                     # sets where the currently selected piece was to none
                     board[y0][x0] = None
 
+                    # pawn promotion to queen if reaching the back rank
+                    if isinstance(piece, Pawn):
+                        if (piece.color == "white" and y == 0) or (piece.color == "black" and y == 7):
+                            board[y][x] = Queen(piece.color)
+
                     # sets the selected piece to none
                     selected_piece = None
 
                     # switches which players turn it is
                     cur_turn = "black" if cur_turn == "white" else "white"
+
 
                 # if the move is not a valid move we just unselect the currently selected piece
                 else:
