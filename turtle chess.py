@@ -1,3 +1,6 @@
+import turtle
+import math
+
 # initializes our imports
 import turtle
 import math
@@ -15,6 +18,10 @@ piece_turtles = []
 
 # creates a variable for the current active players turn
 cur_turn = "white"
+
+# Global variable to track board orientation
+# 'white' means White's pieces are at the bottom (rows 7, 6), 'black' means Black's pieces are at the bottom (rows 0, 1)
+view_orientation = "white"
 
 
 # defines a function to check if the path from a given square to another given square is clear
@@ -348,10 +355,121 @@ def is_king_in_check(board_state, color_to_check):
     return False  # King is not in check
 
 
+# Function to check if there are any legal moves for the current player
+def has_legal_moves(current_board, color_to_check):
+    for y_orig in range(8):
+        for x_orig in range(8):
+            piece = current_board[y_orig][x_orig]
+            if piece is not None and piece.color == color_to_check:
+                possible_moves = piece.GetValidMoves(x_orig, y_orig, current_board)
+                for dx, dy in possible_moves:
+                    x_dest, y_dest = x_orig + dx, y_orig + dy
+
+                    # --- Simulate the move ---
+                    # Create a deep copy of the board to simulate the move without affecting the actual game board
+                    temp_board = [
+                        row[:] for row in current_board
+                    ]  # Simple copy for 2D list of immutables/references
+
+                    # Store original states for potential rollback
+                    original_piece_at_target = temp_board[y_dest][x_dest]
+                    original_piece_has_moved = None
+                    if isinstance(piece, (King, Rook)):
+                        original_piece_has_moved = (
+                            piece.has_moved
+                        )  # Capture the state of *this specific piece instance*
+
+                    original_rook_at_castling_pos = None
+                    original_rook_has_moved_state = None
+
+                    # Perform the move on the temporary board
+                    temp_board[y_dest][x_dest] = temp_board[y_orig][x_orig]
+                    temp_board[y_orig][x_orig] = None
+
+                    # Handle castling specific move (rook movement) on temp_board
+                    if isinstance(temp_board[y_dest][x_dest], King):
+                        if [dx, dy] == [2, 0]:  # Kingside castle
+                            original_rook_at_castling_pos = temp_board[y_orig][7]
+                            original_rook_has_moved_state = (
+                                original_rook_at_castling_pos.has_moved
+                                if isinstance(original_rook_at_castling_pos, Rook)
+                                else None
+                            )
+                            temp_board[y_orig][x_orig + 1] = temp_board[y_orig][7]
+                            temp_board[y_orig][7] = None
+                            if isinstance(temp_board[y_orig][x_orig + 1], Rook):
+                                temp_board[y_orig][x_orig + 1].has_moved = True
+                        elif [dx, dy] == [-2, 0]:  # Queenside castle
+                            original_rook_at_castling_pos = temp_board[y_orig][0]
+                            original_rook_has_moved_state = (
+                                original_rook_at_castling_pos.has_moved
+                                if isinstance(original_rook_at_castling_pos, Rook)
+                                else None
+                            )
+                            temp_board[y_orig][x_orig - 1] = temp_board[y_orig][0]
+                            temp_board[y_orig][0] = None
+                            if isinstance(temp_board[y_orig][x_orig - 1], Rook):
+                                temp_board[y_orig][x_orig - 1].has_moved = True
+                        # For simulation, don't change has_moved on original piece directly
+
+                    # Temporarily update has_moved for the simulated piece if it's a King or Rook
+                    simulated_piece = temp_board[y_dest][x_dest]
+                    if isinstance(simulated_piece, (King, Rook)):
+                        simulated_piece.has_moved = (
+                            True  # Assume it moved for this check
+                        )
+
+                    # Check if the king is still in check after this move
+                    if not is_king_in_check(temp_board, color_to_check):
+                        return True  # Found at least one legal move
+
+                    # --- Rollback the simulated move ---
+                    # Restore piece position
+                    temp_board[y_orig][x_orig] = temp_board[y_dest][x_dest]
+                    temp_board[y_dest][x_dest] = original_piece_at_target
+
+                    # Restore has_moved state for original piece
+                    if (
+                        isinstance(temp_board[y_orig][x_orig], (King, Rook))
+                        and original_piece_has_moved is not None
+                    ):
+                        temp_board[y_orig][x_orig].has_moved = original_piece_has_moved
+
+                    # Rollback castling rook movement
+                    if isinstance(temp_board[y_orig][x_orig], King):
+                        if [dx, dy] == [2, 0]:
+                            temp_board[y_orig][7] = original_rook_at_castling_pos
+                            temp_board[y_orig][x_orig + 1] = None
+                            if (
+                                isinstance(temp_board[y_orig][7], Rook)
+                                and original_rook_has_moved_state is not None
+                            ):
+                                temp_board[y_orig][
+                                    7
+                                ].has_moved = original_rook_has_moved_state
+                        elif [dx, dy] == [-2, 0]:
+                            temp_board[y_orig][0] = original_rook_at_castling_pos
+                            temp_board[y_orig][x_orig - 1] = None
+                            if (
+                                isinstance(temp_board[y_orig][0], Rook)
+                                and original_rook_has_moved_state is not None
+                            ):
+                                temp_board[y_orig][
+                                    0
+                                ].has_moved = original_rook_has_moved_state
+    return False  # No legal moves found
+
+
 # the main funciton that loops
 def main():
     # sets up some global variables
-    global selected_piece, board, piece_images, piece_turtles, cur_turn
+    global \
+        selected_piece, \
+        board, \
+        piece_images, \
+        piece_turtles, \
+        cur_turn, \
+        view_orientation
     # creates a variable to stores the current piece that is picked up
     selected_piece = None
 
@@ -436,12 +554,17 @@ def main():
 
     # defines a function to draw the board
     def DrawBoard():
+        BoardTurt.clear()
         # repeats for all of the rows
         for y in range(8):
             # goes across and draws the squares with a checkered pattern
             for x in range(8):
                 BoardTurt.penup()
-                BoardTurt.goto(x, y)
+                # Adjust drawing coordinates based on view_orientation
+                display_x = x
+                display_y = y if view_orientation == "white" else 7 - y
+
+                BoardTurt.goto(display_x, display_y)
                 BoardTurt.pendown()
                 BoardTurt.fillcolor("white" if (x + y) % 2 == 0 else "brown")
                 BoardTurt.begin_fill()
@@ -479,7 +602,14 @@ def main():
                         t = turtle.Turtle()
                         t.penup()
                         t.shape(img)
-                        t.goto(x + 0.5, y + 0.5)
+
+                        # Adjust piece display coordinates based on view_orientation
+                        display_x = x + 0.5
+                        display_y = (
+                            y + 0.5 if view_orientation == "white" else (7 - y) + 0.5
+                        )
+
+                        t.goto(display_x, display_y)
                         t.turtlesize(1)
                         t.showturtle()
                         piece_turtles.append(t)
@@ -488,8 +618,16 @@ def main():
         if selected_piece is not None:
             # we highlight the pieces place on the board in green
             PieceTurt.pencolor("green")
+            # Adjust drawing coordinates for selected piece based on view_orientation
+            display_x0 = selected_piece[0] + 0.1
+            display_y0 = (
+                (selected_piece[1] + 0.1)
+                if view_orientation == "white"
+                else (7 - selected_piece[1]) + 0.1
+            )
+
             PieceTurt.penup()
-            PieceTurt.goto(selected_piece[0] + 0.1, selected_piece[1] + 0.1)
+            PieceTurt.goto(display_x0, display_y0)
             PieceTurt.pendown()
             for i in range(4):
                 PieceTurt.forward(0.8)
@@ -508,8 +646,16 @@ def main():
             if piece:
                 # we iterate through all of the valid moves that the piece could make
                 for dx, dy in piece.GetValidMoves(x0, y0, board):
+                    # Adjust display coordinates for valid moves based on view_orientation
+                    display_nx = x0 + dx + 0.1
+                    display_ny = (
+                        (y0 + dy + 0.1)
+                        if view_orientation == "white"
+                        else (7 - (y0 + dy)) + 0.1
+                    )
+
                     # we go to them
-                    PieceTurt.goto(x0 + dx + 0.1, y0 + dy + 0.1)
+                    PieceTurt.goto(display_nx, display_ny)
                     PieceTurt.pendown()
 
                     # and highlight them in red
@@ -533,7 +679,7 @@ def main():
                 if board[0][x].type == "pawn" and board[0][x].color == "black":
                     board[0][x] = Queen("black")
 
-        # this bit of code writes whos turn it is in the top right hand corner
+        # Display turn
         PieceTurt.penup()
         PieceTurt.goto(9, 1)
         PieceTurt.write(
@@ -542,6 +688,25 @@ def main():
         PieceTurt.goto(9, 1.6)
         PieceTurt.write("Turn", align="center", font=("Arial", 60, "normal"))
 
+        # Check for game end conditions
+        if is_king_in_check(board, cur_turn):
+            if not has_legal_moves(board, cur_turn):
+                PieceTurt.penup()
+                PieceTurt.goto(9, 3)
+                PieceTurt.write(
+                    "CHECKMATE!", align="center", font=("Arial", 25, "bold")
+                )
+
+            else:
+                PieceTurt.penup()
+                PieceTurt.goto(9, 3)
+                PieceTurt.write("CHECK!", align="center", font=("Arial", 40, "bold"))
+        elif not has_legal_moves(board, cur_turn):
+            PieceTurt.penup()
+            PieceTurt.goto(9, 3)
+            PieceTurt.write("STALEMATE!", align="center", font=("Arial", 40, "bold"))
+        
+
         # we update the screen
         turtle.update()
         # and we call ourselves again so functionally we update the screen 10 times every second
@@ -549,23 +714,39 @@ def main():
 
     # defines the screen clicked function
     def ScreenClicked(x, y):
-        global selected_piece, cur_turn, board  # Ensure board is global if modified here
+        global selected_piece, cur_turn, board, view_orientation  # Ensure board is global if modified here
 
-        # takes the floor of the passed values which converts it into the coordinates on our board
-        x = int(math.floor(x))
-        y = int(math.floor(y))
+        # Prevent clicks if the game is over (checkmate or stalemate)
+        if (
+            is_king_in_check(board, cur_turn) and not has_legal_moves(board, cur_turn)
+        ) or (
+            not is_king_in_check(board, cur_turn)
+            and not has_legal_moves(board, cur_turn)
+        ):
+            return  # Do nothing if game is over
+
+        # Convert screen coordinates to board coordinates based on current view_orientation
+        board_x = int(math.floor(x))
+        board_y = int(math.floor(y))
+
+        if view_orientation == "black":
+            board_y = 7 - board_y  # Invert y-coordinate for black's view
 
         # if the place clicked is outside the board
-        if not (0 <= x < 8 and 0 <= y < 8):
+        if not (0 <= board_x < 8 and 0 <= board_y < 8):
             # we do nothing and end the function
+            selected_piece = None  # Deselect if clicked outside the board
             return
 
         # if we currently have no piece selected
         if selected_piece is None:
             # and there is a piece in the place that we click, and it is that colors turn
-            if board[y][x] is not None and board[y][x].color == cur_turn:
+            if (
+                board[board_y][board_x] is not None
+                and board[board_y][board_x].color == cur_turn
+            ):
                 # we set that piece as our selected piece
-                selected_piece = [x, y]
+                selected_piece = [board_x, board_y]
 
         # otherwise (a piece is already selected)
         else:
@@ -580,124 +761,95 @@ def main():
                 valid_moves = piece.GetValidMoves(x0, y0, board)
 
                 # we store what the move the user is trying to make currently
-                move = [x - x0, y - y0]
+                move = [board_x - x0, board_y - y0]
 
                 # if the move is one of the valid moves that the piece can make
                 if move in valid_moves:
-                    # --- Simulate the move ---
-                    original_piece_at_target = board[y][
-                        x
-                    ]  # Store what's currently at the target square
+                    temp_board = [row[:] for row in board]
+
+                    original_piece_at_target = temp_board[board_y][board_x]
                     original_piece_has_moved = (
                         piece.has_moved if isinstance(piece, (King, Rook)) else None
-                    )  # Store original state for rollback
-                    original_rook_at_castling_pos = None  # For castling rollback
-                    original_rook_has_moved_state = None  # For castling rollback
+                    )
+                    original_rook_at_castling_pos = None
+                    original_rook_has_moved_state = None
 
-                    # Tentatively move the piece
-                    board[y][x] = piece
-                    board[y0][x0] = None
+                    # Perform the move on the temporary board
+                    temp_board[board_y][board_x] = temp_board[y0][x0]
+                    temp_board[y0][x0] = None
 
-                    # Handle castling specific move (rook movement)
-                    if isinstance(piece, King):
-                        if move == [2, 0]:  # Kingside castle
-                            original_rook_at_castling_pos = board[y][7]
-                            original_rook_has_moved_state = (
-                                board[y][7].has_moved
-                                if isinstance(board[y][7], Rook)
-                                else None
-                            )
-                            board[y][x - 1] = board[y][7]  # Move rook
-                            board[y][7] = None
-                            if isinstance(board[y][x - 1], Rook):
-                                board[y][x - 1].has_moved = True  # Mark rook as moved
-                        elif move == [-2, 0]:  # Queenside castle
-                            original_rook_at_castling_pos = board[y][0]
-                            original_rook_has_moved_state = (
-                                board[y][0].has_moved
-                                if isinstance(board[y][0], Rook)
-                                else None
-                            )
-                            board[y][x + 1] = board[y][0]  # Move rook
-                            board[y][0] = None
-                            if isinstance(board[y][x + 1], Rook):
-                                board[y][x + 1].has_moved = True  # Mark rook as moved
-                        piece.has_moved = True  # Mark king as moved
-
-                    elif isinstance(
-                        piece, Rook
-                    ):  # Only mark rook as moved if it's the actual piece being moved
-                        piece.has_moved = True
-
-                    # Check if this move puts the current player's king in check
-                    # We check the king of the player, because they just made the move.
-                    if is_king_in_check(board, cur_turn):
-                        print("you cant do that move the king dude")
-                        board[y0][x0] = piece  # Put the piece back
-                        board[y][x] = (
-                            original_piece_at_target  # Put back what was at the target square
+                    # Temporarily update has_moved for the simulated piece if it's a King or Rook
+                    simulated_piece_on_temp_board = temp_board[board_y][board_x]
+                    if isinstance(simulated_piece_on_temp_board, (King, Rook)):
+                        simulated_piece_on_temp_board.has_moved = (
+                            True  # Mark as moved for this check
                         )
-                        if (
-                            isinstance(piece, (King, Rook))
-                            and original_piece_has_moved is not None
-                        ):
-                            piece.has_moved = original_piece_has_moved  # Restore original 'has_moved' state
 
-                        # Rollback castling rook movement
-                        if isinstance(piece, King):
-                            if move == [2, 0]:  # Kingside castle rollback
-                                board[y][7] = original_rook_at_castling_pos
-                                board[y][x - 1] = None  # Clear rook's moved spot
-                                if (
-                                    isinstance(board[y][7], Rook)
-                                    and original_rook_has_moved_state is not None
-                                ):
-                                    board[y][
-                                        7
-                                    ].has_moved = original_rook_has_moved_state
-                            elif move == [-2, 0]:  # Queenside castle rollback
-                                board[y][0] = original_rook_at_castling_pos
-                                board[y][x + 1] = None  # Clear rook's moved spot
-                                if (
-                                    isinstance(board[y][0], Rook)
-                                    and original_rook_has_moved_state is not None
-                                ):
-                                    board[y][
-                                        0
-                                    ].has_moved = original_rook_has_moved_state
+                    # Handle castling specific move (rook movement) on temp_board
+                    if isinstance(simulated_piece_on_temp_board, King):
+                        if move == [2, 0]:  # Kingside castle
+                            original_rook_at_castling_pos = temp_board[y0][7]
+                            original_rook_has_moved_state = (
+                                original_rook_at_castling_pos.has_moved
+                                if isinstance(original_rook_at_castling_pos, Rook)
+                                else None
+                            )
+                            temp_board[y0][x0 + 1] = temp_board[y0][7]
+                            temp_board[y0][7] = None
+                            if isinstance(temp_board[y0][x0 + 1], Rook):
+                                temp_board[y0][x0 + 1].has_moved = True
+                        elif move == [-2, 0]:  # Queenside castle
+                            original_rook_at_castling_pos = temp_board[y0][0]
+                            original_rook_has_moved_state = (
+                                original_rook_at_castling_pos.has_moved
+                                if isinstance(original_rook_at_castling_pos, Rook)
+                                else None
+                            )
+                            temp_board[y0][x0 - 1] = temp_board[y0][0]
+                            temp_board[y0][0] = None
+                            if isinstance(temp_board[y0][x0 - 1], Rook):
+                                temp_board[y0][x0 - 1].has_moved = True
 
+                    # Check if this simulated move puts the current player's king in check
+                    if is_king_in_check(temp_board, cur_turn):
+                        print("That move puts your king in check! Try again.")
                         selected_piece = None  # Deselect the piece
                     else:
-                        # its legal
+                        # If the move is legal (doesn't put own king in check)
+                        # Apply the move to the actual game board
+                        board[board_y][board_x] = board[y0][x0]
+                        board[y0][x0] = None
 
-                        # Pawn promotion to queen if reaching the back rank
                         if isinstance(piece, Pawn):
-                            if (piece.color == "white" and y == 0) or (
-                                piece.color == "black" and y == 7
+                            if (piece.color == "white" and board_y == 0) or (
+                                piece.color == "black" and board_y == 7
                             ):
-                                board[y][x] = Queen(piece.color)
+                                board[board_y][board_x] = Queen(piece.color)
 
-                        # Update the has_moved property for King and Rook if it's their final move
+                        # Update has_moved property for King and Rook on the actual board
+                        if isinstance(board[board_y][board_x], (King, Rook)):
+                            board[board_y][board_x].has_moved = True
+
+                        # Handle castling (actual rook movement)
+                        if isinstance(piece, King):
+                            if move == [2, 0]:  # Kingside castle
+                                board[y0][x0 + 1] = board[y0][7]
+                                board[y0][7] = None
+                                if isinstance(board[y0][x0 + 1], Rook):
+                                    board[y0][x0 + 1].has_moved = True
+                            elif move == [-2, 0]:  # Queenside castle
+                                board[y0][x0 - 1] = board[y0][0]
+                                board[y0][0] = None
+                                if isinstance(board[y0][x0 - 1], Rook):
+                                    board[y0][x0 - 1].has_moved = True
 
                         selected_piece = None
                         cur_turn = "black" if cur_turn == "white" else "white"
+                        view_orientation = (
+                            cur_turn  # Flip the board for the next player
+                        )
 
-                        # After a legal move, check if the other dudes king is now in check
-                        if is_king_in_check(
-                            board, cur_turn
-                        ):  # Check the other player's king
-                            PieceTurt.penup()
-                            PieceTurt.goto(9, 1.6)
-                            PieceTurt.write(
-                                "King is", align="center", font=("Arial", 60, "normal")
-                            )
-                            PieceTurt.goto(9, -1)
-                            PieceTurt.write(
-                                "in Check", align="center", font=("Arial", 60, "normal")
-                            )
-                            # also idk how to write so ts is not working that well 
-                            # nick can you add checkmate and stalemate here : )
-
+                        DrawBoard()  # Redraw the board after flipping orientation
                 else:
                     selected_piece = None  # Deselect the piece if the move wasn't valid
 
