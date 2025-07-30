@@ -250,37 +250,6 @@ class King:
         self.type = "king"
         self.has_moved = False
 
-    #started check code but idk whats wrong
-    '''
-    def find_king(self,board, color):
-        for row in range(len(board)):
-            for col in range(len(board[row])):
-                piece = board[row][col]
-                if (
-                    piece is not None
-                    and getattr(piece, "type", None) == "king"
-                    and piece.color == color
-                ):
-                    return (col, row)
-        return None  # King not found
-
-    #keep the function name its funny
-    def checkforcheck(self,board, color):
-        king_pos = self.find_king(board, color)
-        print(king_pos)
-
-        kx, ky = king_pos
-        for y, row in enumerate(board):
-            for x, piece in enumerate(row):
-                if piece is not None and piece.color != color:
-                    moves = piece.GetValidMoves(x, y, board)
-                    for dx, dy in moves:
-                        if x + dx == kx and y + dy == ky:
-                            print("check")
-                            return True
-                            
-        return False
-    '''
     # defines a function to get the valid moves of the piece
     def GetValidMoves(self, x, y, board):
         moves = [
@@ -319,34 +288,64 @@ class King:
             # sets which row we are checking depending on the color of the king
             row = 7 if self.color == "white" else 0
 
+            # Kingside Castling
             if (
-                # checks if the object on the right of the board is a rook
                 isinstance(board[row][7], Rook)
-                # with the same color as the king
                 and board[row][7].color == self.color
-                # that has not moved
                 and not board[row][7].has_moved
-                # and the path is clear
                 and IsPathClear(x, row, 3, 0)
             ):
-                # castling is a valid move
+                # Ensure squares king moves through/to are not attacked (simplified here, but important for full implementation)
+                # For basic functionality, this IsPathClear is sufficient.
                 valid_moves.append([2, 0])
 
+            # Queenside Castling
             if (
-                # checks if the object on the left of the board is a rook
                 isinstance(board[row][0], Rook)
-                # with the same color as the king
                 and board[row][0].color == self.color
-                # that has not moved
                 and not board[row][0].has_moved
-                # and the path is clear
                 and IsPathClear(x, row, -4, 0)
             ):
-                # castling is a valid move
+                # Ensure squares king moves through/to are not attacked
                 valid_moves.append([-2, 0])
 
         # returns the list of valid moves
         return valid_moves
+
+
+# Defines a standalone function to find the king's position
+def find_king(board, color):
+    for row_idx, row in enumerate(board):
+        for col_idx, piece in enumerate(row):
+            if (
+                piece is not None
+                and isinstance(piece, King)  # Use isinstance for type checking
+                and piece.color == color
+            ):
+                return (col_idx, row_idx)
+    return None  # King not found
+
+
+# Defines a standalone function to check if a king of a given color is in check
+def is_king_in_check(board_state, color_to_check):
+    king_pos = find_king(board_state, color_to_check)
+    if king_pos is None:
+        # This means the king is not on the board for some reason, which should not happen.
+        # This could indicate a king was captured in an invalid way.
+        return False
+
+    kx, ky = king_pos
+    # Iterate through all pieces on the board
+    for y, row in enumerate(board_state):
+        for x, piece in enumerate(row):
+            # If the piece belongs to the opponent
+            if piece is not None and piece.color != color_to_check:
+                potential_moves = piece.GetValidMoves(x, y, board_state)
+                for dx, dy in potential_moves:
+                    # If this potential move lands on the king's square
+                    if x + dx == kx and y + dy == ky:
+                        return True  # King is under attack
+    return False  # King is not in check
 
 
 # the main funciton that loops
@@ -522,7 +521,8 @@ def main():
             # then we set the pencolor back to black for writing the turn
             PieceTurt.pencolor("black")
 
-        # some nonfunctional code for promoting
+        # However, if you promote multiple pawns in one go for some reason, this might be okay.
+        # But generally, promotion should happen immediately upon a pawn reaching the back rank.
         for x in range(8):
             if board[7][x] is not None:
                 if board[7][x].type == "pawn" and board[7][x].color == "white":
@@ -549,7 +549,7 @@ def main():
 
     # defines the screen clicked function
     def ScreenClicked(x, y):
-        global selected_piece, cur_turn
+        global selected_piece, cur_turn, board  # Ensure board is global if modified here
 
         # takes the floor of the passed values which converts it into the coordinates on our board
         x = int(math.floor(x))
@@ -567,14 +567,14 @@ def main():
                 # we set that piece as our selected piece
                 selected_piece = [x, y]
 
-        # otherwise
+        # otherwise (a piece is already selected)
         else:
             # we store the coordinates of our currently selected piece
             x0, y0 = selected_piece
             # and we store the piece itself
             piece = board[y0][x0]
 
-            # if it is a piece
+            # if it is a piece (should always be if selected_piece is not None)
             if piece:
                 # we store the list of all of the valid moves it could make
                 valid_moves = piece.GetValidMoves(x0, y0, board)
@@ -584,43 +584,122 @@ def main():
 
                 # if the move is one of the valid moves that the piece can make
                 if move in valid_moves:
-                    # if it is a king
-                    if isinstance(piece, King):
-                        # if castling, move the rook
-                        if move == [2, 0]:
-                            board[y][x - 1] = board[y][7]
-                            board[y][7] = None
-                        elif move == [-2, 0]:
-                            board[y][x + 1] = board[y][0]
-                            board[y][0] = None
-                        piece.has_moved = True
+                    # --- Simulate the move ---
+                    original_piece_at_target = board[y][
+                        x
+                    ]  # Store what's currently at the target square
+                    original_piece_has_moved = (
+                        piece.has_moved if isinstance(piece, (King, Rook)) else None
+                    )  # Store original state for rollback
+                    original_rook_at_castling_pos = None  # For castling rollback
+                    original_rook_has_moved_state = None  # For castling rollback
 
-                    # if the piece is a rook we store that it has moved so we can't castle with it
-                    if isinstance(piece, Rook):
-                        piece.has_moved = True
-
-                    # sets the clicked place to the currently selected piece
+                    # Tentatively move the piece
                     board[y][x] = piece
-
-                    # sets where the currently selected piece was to none
                     board[y0][x0] = None
 
-                    # pawn promotion to queen if reaching the back rank
-                    if isinstance(piece, Pawn):
-                        if (piece.color == "white" and y == 0) or (
-                            piece.color == "black" and y == 7
+                    # Handle castling specific move (rook movement)
+                    if isinstance(piece, King):
+                        if move == [2, 0]:  # Kingside castle
+                            original_rook_at_castling_pos = board[y][7]
+                            original_rook_has_moved_state = (
+                                board[y][7].has_moved
+                                if isinstance(board[y][7], Rook)
+                                else None
+                            )
+                            board[y][x - 1] = board[y][7]  # Move rook
+                            board[y][7] = None
+                            if isinstance(board[y][x - 1], Rook):
+                                board[y][x - 1].has_moved = True  # Mark rook as moved
+                        elif move == [-2, 0]:  # Queenside castle
+                            original_rook_at_castling_pos = board[y][0]
+                            original_rook_has_moved_state = (
+                                board[y][0].has_moved
+                                if isinstance(board[y][0], Rook)
+                                else None
+                            )
+                            board[y][x + 1] = board[y][0]  # Move rook
+                            board[y][0] = None
+                            if isinstance(board[y][x + 1], Rook):
+                                board[y][x + 1].has_moved = True  # Mark rook as moved
+                        piece.has_moved = True  # Mark king as moved
+
+                    elif isinstance(
+                        piece, Rook
+                    ):  # Only mark rook as moved if it's the actual piece being moved
+                        piece.has_moved = True
+
+                    # Check if this move puts the current player's king in check
+                    # We check the king of the player, because they just made the move.
+                    if is_king_in_check(board, cur_turn):
+                        print("you cant do that move the king dude")
+                        board[y0][x0] = piece  # Put the piece back
+                        board[y][x] = (
+                            original_piece_at_target  # Put back what was at the target square
+                        )
+                        if (
+                            isinstance(piece, (King, Rook))
+                            and original_piece_has_moved is not None
                         ):
-                            board[y][x] = Queen(piece.color)
+                            piece.has_moved = original_piece_has_moved  # Restore original 'has_moved' state
 
-                    # sets the selected piece to none
-                    selected_piece = None
+                        # Rollback castling rook movement
+                        if isinstance(piece, King):
+                            if move == [2, 0]:  # Kingside castle rollback
+                                board[y][7] = original_rook_at_castling_pos
+                                board[y][x - 1] = None  # Clear rook's moved spot
+                                if (
+                                    isinstance(board[y][7], Rook)
+                                    and original_rook_has_moved_state is not None
+                                ):
+                                    board[y][
+                                        7
+                                    ].has_moved = original_rook_has_moved_state
+                            elif move == [-2, 0]:  # Queenside castle rollback
+                                board[y][0] = original_rook_at_castling_pos
+                                board[y][x + 1] = None  # Clear rook's moved spot
+                                if (
+                                    isinstance(board[y][0], Rook)
+                                    and original_rook_has_moved_state is not None
+                                ):
+                                    board[y][
+                                        0
+                                    ].has_moved = original_rook_has_moved_state
 
-                    # switches which players turn it is
-                    cur_turn = "black" if cur_turn == "white" else "white"
+                        selected_piece = None  # Deselect the piece
+                    else:
+                        # its legal
 
-                # if the move is not a valid move we just unselect the currently selected piece
+                        # Pawn promotion to queen if reaching the back rank
+                        if isinstance(piece, Pawn):
+                            if (piece.color == "white" and y == 0) or (
+                                piece.color == "black" and y == 7
+                            ):
+                                board[y][x] = Queen(piece.color)
+
+                        # Update the has_moved property for King and Rook if it's their final move
+
+                        selected_piece = None
+                        cur_turn = "black" if cur_turn == "white" else "white"
+
+                        # After a legal move, check if the other dudes king is now in check
+                        if is_king_in_check(
+                            board, cur_turn
+                        ):  # Check the other player's king
+                            PieceTurt.penup()
+                            PieceTurt.goto(9, 1.6)
+                            PieceTurt.write(
+                                "King is", align="center", font=("Arial", 60, "normal")
+                            )
+                            PieceTurt.goto(9, -1)
+                            PieceTurt.write(
+                                "in Check", align="center", font=("Arial", 60, "normal")
+                            )
+                            # also idk how to write so ts is not working that well 
+                            # nick can you add checkmate and stalemate here : )
+
                 else:
-                    selected_piece = None
+                    selected_piece = None  # Deselect the piece if the move wasn't valid
 
     # when the screen is clicked we run the on screen clicked function
     turtle.onscreenclick(ScreenClicked)
