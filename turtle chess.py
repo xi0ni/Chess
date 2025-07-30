@@ -250,6 +250,37 @@ class King:
         self.type = "king"
         self.has_moved = False
 
+    #started check code but idk whats wrong
+    '''
+    def find_king(self,board, color):
+        for row in range(len(board)):
+            for col in range(len(board[row])):
+                piece = board[row][col]
+                if (
+                    piece is not None
+                    and getattr(piece, "type", None) == "king"
+                    and piece.color == color
+                ):
+                    return (col, row)
+        return None  # King not found
+
+    #keep the function name its funny
+    def checkforcheck(self,board, color):
+        king_pos = self.find_king(board, color)
+        print(king_pos)
+
+        kx, ky = king_pos
+        for y, row in enumerate(board):
+            for x, piece in enumerate(row):
+                if piece is not None and piece.color != color:
+                    moves = piece.GetValidMoves(x, y, board)
+                    for dx, dy in moves:
+                        if x + dx == kx and y + dy == ky:
+                            print("check")
+                            return True
+                            
+        return False
+    '''
     # defines a function to get the valid moves of the piece
     def GetValidMoves(self, x, y, board):
         moves = [
@@ -602,6 +633,3 @@ def main():
 
 # calls main
 main()
-
-
-# this is a test
